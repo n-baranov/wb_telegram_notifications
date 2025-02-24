@@ -1,7 +1,7 @@
 #!/bin/bash
 
 STAR="⭐"
-CHAT_NUM=1
+CHAT_NUM=4
 
 declare -A ary
 pat='^([^[:space:]]+)[[:space:]]*=[[:space:]]*"([^"]+)"$'
@@ -137,7 +137,8 @@ for i in `seq 0 $(( $LENGTH - 1 ))`; do
                             done
                     fi
             done
-            jq -s '.[0] + .[1]' $CURRENT_FILEPATH/$PREVIOUS_FILENAME reports/$DATETIME-$CURRENT_SKU | jq -r '. |= sort_by(.createdDate)' > $CURRENT_FILEPATH/0-feedback-pool.json
+            jq -s '.[0] + .[1]' $CURRENT_FILEPATH/$PREVIOUS_FILENAME reports/$DATETIME-$CURRENT_SKU | jq -r '. |= sort_by(.createdDate)' > $CURRENT_FILEPATH/tmp.json
+            mv $CURRENT_FILEPATH/tmp.json $CURRENT_FILEPATH/$PREVIOUS_FILENAME
             rm $CURRENT_FILEPATH/$CURRENT_FILENAME
     # FIRST RUN EXCEPTION
         elif [ $FILES_ARE_DIFFERENT -eq 0 ] && [ $FILE_IS_FIRST -eq 1 ]; then
