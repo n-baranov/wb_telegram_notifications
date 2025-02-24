@@ -26,6 +26,9 @@ DATETIME=$(date +'%Y-%m-%d-%H-%M-%S')
 
 for i in `seq 0 $(( $LENGTH - 1 ))`; do
     CURRENT_GROUP=$(jq -r '.['$i'].group' sku-new.json)
+    echo "===================="
+    echo "CURRENT_GROUP=$CURRENT_GROUP"
+    echo "===================="
     CURRENT_GROUP_LENGTH=$(jq -r '[.[]|select(.group=="'$CURRENT_GROUP'")][].sku[].num' sku-new.json | wc -l)
     for n in `seq 0 $(( $CURRENT_GROUP_LENGTH - 1 ))`; do
         CURRENT_SKU=$(jq -r '[.[]|select(.group=="'$CURRENT_GROUP'")][].sku['$n'].num' sku-new.json)
