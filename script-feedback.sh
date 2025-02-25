@@ -125,10 +125,10 @@ for i in `seq 0 $(( $LENGTH - 1 ))`; do
                             JSON_STARS="$JSON_STARS$STAR"
                     done
 
-                    # check for dublicates
-                    JSON_ID=$(jq -r '.['$j'].id' reports/$DATETIME-$CURRENT_SKU)
-                    DUBLICATE_TAG=$(grep -Rlw $CURRENT_FILEPATH -e '$JSON_ID' | wc -l)
-                    if [ $DUBLICATE_TAG -lt 2 ]; then
+                    # check if feedback is more than one month old
+                    JSON_DATE_TIMESTAMP=$(date -ud "$JSON_ORDER_DATE_GMT" +"%s")
+                    ONE_MONTH_AGO_TIMESTAMP=$(date -ud "1 month ago" +"%s")
+                    if [ $JSON_DATE_TIMESTAMP -gt $ONE_MONTH_AGO_TIMESTAMP ]; then
                             # send messages from bot
                             for k in `seq 1 $CHAT_NUM`; do
                                     current_chat_id=chat_id_$k
