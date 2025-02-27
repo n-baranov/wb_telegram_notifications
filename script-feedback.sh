@@ -126,7 +126,7 @@ for i in `seq 0 $(( $LENGTH - 1 ))`; do
                     done
 
                     # check if feedback is more than one month old
-                    JSON_DATE_TIMESTAMP=$(date -ud "$JSON_ORDER_DATE_GMT" +"%s")
+                    JSON_DATE_TIMESTAMP=$(date -ud "$JSON_DATE_GMT" +"%s")
                     ONE_MONTH_AGO_TIMESTAMP=$(date -ud "1 month ago" +"%s")
                     if [ $JSON_DATE_TIMESTAMP -gt $ONE_MONTH_AGO_TIMESTAMP ]; then
                             # send messages from bot
