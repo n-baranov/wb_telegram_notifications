@@ -1,0 +1,19 @@
+[
+    {
+        "group": "girls-stuff",
+        "sku":
+            [
+                {"num": "345678912", "model": "flowers"},
+                {"num": "456789132", "model": "rainbow"},
+                {"num": "568791234", "model": "dildo"}
+            ]
+    },
+    {
+        "group": "boys-stuff",
+        "sku":
+            [
+                {"num": "123456789", "model": "screwdriver"},
+                {"num": "235467891", "model": "hammer"}
+            ]
+    }
+]

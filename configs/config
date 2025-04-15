@@ -1,0 +1,7 @@
+#telegram chat ids (up to 4 by default, but you can change this by adjusting the CHAT_NUM variable in script-feedback.sh)
+chat_id_1="123456789"
+chat_id_2="234567891"
+TG_BOT_TOKEN="yoUr:telegRamTokeN"
+WB_TOKEN="yOurWbtoKEn"
+LK_NAME="ИП Иванов"
+LK_PATH="/path/to/your/workspace/"
