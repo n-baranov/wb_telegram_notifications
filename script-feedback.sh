@@ -34,7 +34,7 @@ for i in `seq 0 $(( $LENGTH - 1 ))`; do
         CURRENT_SKU=$(jq -r '[.[]|select(.group=="'$CURRENT_GROUP'")][].sku['$n'].num' sku-new.json)
         echo "n=$n; CURRENT_SKU=$CURRENT_SKU"
 
-        WB_TOKEN_CHANGE=$(curl -s --location --request GET 'https://feedbacks-api.wb.ru/api/v1/feedbacks?isAnswered=false&take=5000&skip=0&nmId='$CURRENT_SKU --header 'Authorization: '$WB_TOKEN --header 'Content-Type: application/json' | jq -r '.status')
+        WB_TOKEN_CHANGE=$(curl -s --location --request GET 'https://feedbacks-api.wildberries.ru/api/v1/feedbacks?isAnswered=false&take=5000&skip=0&nmId='$CURRENT_SKU --header 'Authorization: '$WB_TOKEN --header 'Content-Type: application/json' | jq -r '.status')
         if  [ $WB_TOKEN_CHANGE == '401' ]; then
             curl -s -X POST 'https://api.telegram.org/bot'$TG_BOT_TOKEN'/sendMessage' -d chat_id=$chat_id_1 -d text="Токен WB изменился! Требуется обновить токен в скрипте на сервере%0A$LK_NAME"
         break
@@ -44,9 +44,9 @@ for i in `seq 0 $(( $LENGTH - 1 ))`; do
         CURRENT_FILENAME=$DATETIME.json
         mkdir -p $CURRENT_FILEPATH
 
-        curl -s --location --request GET 'https://feedbacks-api.wb.ru/api/v1/feedbacks?isAnswered=true&take=5000&skip=0&nmId='$CURRENT_SKU  --header 'Authorization: '$WB_TOKEN --header 'Content-Type: application/json' > $CURRENT_FILEPATH/ANSWERED_$CURRENT_FILENAME
+        curl -s --location --request GET 'https://feedbacks-api.wildberries.ru/api/v1/feedbacks?isAnswered=true&take=5000&skip=0&nmId='$CURRENT_SKU  --header 'Authorization: '$WB_TOKEN --header 'Content-Type: application/json' > $CURRENT_FILEPATH/ANSWERED_$CURRENT_FILENAME
         echo $(jq -r '.data.feedbacks' $CURRENT_FILEPATH/ANSWERED_$CURRENT_FILENAME     | jq -r 'del(.[].answer,.[].state,.[].video,.[].photoLinks,.[].matchingSize,.[].isAbleSupplierFeedbackValuation,.[].supplierFeedbackValuation,.[].isAbleSupplierProductValuation,.[].supplierProductValuation,.[].isAbleReturnProductOrders,.[].returnProductOrdersDate,.[].subjectId,.[].subjectName,.[].wasViewed,.[].productDetails.size,.[].productDetails.imtId,.[].productDetails.productName,.[].productDetails.supplierName,.[].productDetails.brandName,.[].color,.[].subjectName,.[].parentFeedbackId,.[].childFeedbackId)' | jq -r '. |= sort_by(.createdDate)') > $CURRENT_FILEPATH/ANSWERED_$CURRENT_FILENAME
-        curl -s --location --request GET 'https://feedbacks-api.wb.ru/api/v1/feedbacks?isAnswered=false&take=5000&skip=0&nmId='$CURRENT_SKU --header 'Authorization: '$WB_TOKEN --header 'Content-Type: application/json' > $CURRENT_FILEPATH/NOT_ANSWERED_$CURRENT_FILENAME
+        curl -s --location --request GET 'https://feedbacks-api.wildberries.ru/api/v1/feedbacks?isAnswered=false&take=5000&skip=0&nmId='$CURRENT_SKU --header 'Authorization: '$WB_TOKEN --header 'Content-Type: application/json' > $CURRENT_FILEPATH/NOT_ANSWERED_$CURRENT_FILENAME
         echo $(jq -r '.data.feedbacks' $CURRENT_FILEPATH/NOT_ANSWERED_$CURRENT_FILENAME | jq -r 'del(.[].answer,.[].state,.[].video,.[].photoLinks,.[].matchingSize,.[].isAbleSupplierFeedbackValuation,.[].supplierFeedbackValuation,.[].isAbleSupplierProductValuation,.[].supplierProductValuation,.[].isAbleReturnProductOrders,.[].returnProductOrdersDate,.[].subjectId,.[].subjectName,.[].wasViewed,.[].productDetails.size,.[].productDetails.imtId,.[].productDetails.productName,.[].productDetails.supplierName,.[].productDetails.brandName,.[].color,.[].subjectName,.[].parentFeedbackId,.[].childFeedbackId)' | jq -r '. |= sort_by(.createdDate)') > $CURRENT_FILEPATH/NOT_ANSWERED_$CURRENT_FILENAME
 
         ANSWERED_JSON=$(<$CURRENT_FILEPATH/ANSWERED_$CURRENT_FILENAME)
