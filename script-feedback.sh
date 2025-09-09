@@ -1,7 +1,7 @@
 #!/bin/bash
 
 STAR="⭐"
-CHAT_NUM=4
+CHAT_NUM=5
 
 declare -A ary
 pat='^([^[:space:]]+)[[:space:]]*=[[:space:]]*"([^"]+)"$'
