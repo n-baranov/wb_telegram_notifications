@@ -109,7 +109,7 @@ for i in `seq 0 $(( $LENGTH - 1 ))`; do
             do
                     echo j=$j
                     JSON_SUPPLIER_ARTICLE=$(jq -r '.['$j'].productDetails.supplierArticle' reports/$DATETIME-$CURRENT_SKU)
-		    JSON_SUPPLIER_ARTICLE=$(sed 's|\&||g' <<<$JSON_SUPPLIER_ARTICLE)
+                    JSON_SUPPLIER_ARTICLE=$(sed 's|\&||g' <<<$JSON_SUPPLIER_ARTICLE)
                     JSON_USERNAME=$(jq -r '.['$j'].userName' reports/$DATETIME-$CURRENT_SKU)
                     JSON_TEXT=$(jq -r '.['$j'].text' reports/$DATETIME-$CURRENT_SKU)
                     JSON_PROS=$(jq -r '.['$j'].pros' reports/$DATETIME-$CURRENT_SKU)
