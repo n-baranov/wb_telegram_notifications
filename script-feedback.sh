@@ -117,7 +117,7 @@ for i in `seq 0 $(( $LENGTH - 1 ))`; do
                     JSON_SUPPLIER_ARTICLE=$(jq -r '.['$j'].productDetails.supplierArticle' reports/$DATETIME-$CURRENT_SKU)
                     JSON_SUPPLIER_ARTICLE=$(sed 's|\&||g' <<<$JSON_SUPPLIER_ARTICLE)
                     JSON_USERNAME=$(jq -r '.['$j'].userName' reports/$DATETIME-$CURRENT_SKU)
-                    JSON_TEXT=$(jq -r '.['$j'].text' reports/$DATETIME-$CURRENT_SKU)
+                    JSON_TEXT=$(jq -r '.['$j'].text' reports/$DATETIME-$CURRENT_SKU | tr '*' '#' || true)
                     JSON_PROS=$(jq -r '.['$j'].pros' reports/$DATETIME-$CURRENT_SKU)
                     JSON_CONS=$(jq -r '.['$j'].cons' reports/$DATETIME-$CURRENT_SKU)
                     JSON_BABLES=$(jq -r '.['$j'].bables' reports/$DATETIME-$CURRENT_SKU | tr '\n' ' ' | tr  -d '"' || true)
@@ -129,7 +129,7 @@ for i in `seq 0 $(( $LENGTH - 1 ))`; do
                     JSON_STARS=
                     for k in `seq 1 $JSON_PRODUCT_VALUE`
                     do
-                        JSON_STARS="$JSON_STARS$STAR"
+                            JSON_STARS="$JSON_STARS$STAR"
                     done
                     CURL_MESSAGE_BODY="Новая оценка: $JSON_STARS %0A$LK_NAME %0AАртикул: $JSON_SUPPLIER_ARTICLE %0AДата: $JSON_DATE %0AПользователь: $JSON_USERNAME %0AПлюсы: $JSON_PROS %0AМинусы: $JSON_CONS %0AТекст: $JSON_TEXT%0AПримечание: $JSON_BABLES%0AТовар был заказан: $JSON_ORDER_DATE"
 
