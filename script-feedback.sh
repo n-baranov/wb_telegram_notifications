@@ -18,10 +18,11 @@ TG_BOT_TOKEN="${ary[TG_BOT_TOKEN]}"
 WB_TOKEN="${ary[WB_TOKEN]}"
 LK_NAME="${ary[LK_NAME]}"
 LK_PATH="${ary[LK_PATH]}"
+TG_PROXY="${ary[TG_PROXY]}"
 
 cd $LK_PATH
 
-LENGTH=$(jq length sku-new.json)
+LENGTH=$(jq length sku.json)
 DATETIME=$(date +'%Y-%m-%d-%H-%M-%S')
  
 if [ ! -f jobs/send_messages.sh ]; then
@@ -31,13 +32,13 @@ if [ ! -f jobs/send_messages.sh ]; then
 fi
 
 for i in `seq 0 $(( $LENGTH - 1 ))`; do
-    CURRENT_GROUP=$(jq -r '.['$i'].group' sku-new.json)
+    CURRENT_GROUP=$(jq -r '.['$i'].group' sku.json)
     echo "===================="
     echo "CURRENT_GROUP=$CURRENT_GROUP"
     echo "===================="
-    CURRENT_GROUP_LENGTH=$(jq -r '[.[]|select(.group=="'$CURRENT_GROUP'")][].sku[].num' sku-new.json | wc -l)
+    CURRENT_GROUP_LENGTH=$(jq -r '[.[]|select(.group=="'$CURRENT_GROUP'")][].sku[].num' sku.json | wc -l)
     for n in `seq 0 $(( $CURRENT_GROUP_LENGTH - 1 ))`; do
-        CURRENT_SKU=$(jq -r '[.[]|select(.group=="'$CURRENT_GROUP'")][].sku['$n'].num' sku-new.json)
+        CURRENT_SKU=$(jq -r '[.[]|select(.group=="'$CURRENT_GROUP'")][].sku['$n'].num' sku.json)
         echo "n=$n; CURRENT_SKU=$CURRENT_SKU"
 
         WB_TOKEN_CHANGE=$(curl -s --location --request GET 'https://feedbacks-api.wildberries.ru/api/v1/feedbacks?isAnswered=false&take=5000&skip=0&nmId='$CURRENT_SKU --header 'Authorization: '$WB_TOKEN --header 'Content-Type: application/json' | jq -r '.status')
@@ -157,7 +158,7 @@ for i in `seq 0 $(( $LENGTH - 1 ))`; do
                             for k in `seq 1 $CHAT_NUM`; do
                                     current_chat_id=chat_id_$k
                                     if  [ "${!current_chat_id}" != "" ]; then
-                                            echo "curl -s -X POST 'https://api.telegram.org/bot$TG_BOT_TOKEN/$CURL_METHOD' -d chat_id=${!current_chat_id} -d $CURL_DATA" >> jobs/send_messages.sh
+                                            echo "curl -s $TG_PROXY -X POST 'https://api.telegram.org/bot$TG_BOT_TOKEN/$CURL_METHOD' -d chat_id=${!current_chat_id} -d $CURL_DATA" >> jobs/send_messages.sh
                                             bash jobs/send_messages.sh
                                             CURL_OUTPUT=$(echo $?)
                                             if [ $CURL_OUTPUT -eq 0 ]; then

@@ -20,7 +20,7 @@ LK_PATH="${ary[LK_PATH]}"
 
 cd $LK_PATH
 
-LENGTH=$(jq length sku-new.json)
+LENGTH=$(jq length sku.json)
 DATETIME=$(date +'%Y-%m-%d-%H-%M-%S')
 
 CURRENT_FILEPATH=qsts
