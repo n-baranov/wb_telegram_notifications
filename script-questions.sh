@@ -17,6 +17,7 @@ TG_BOT_TOKEN="${ary[TG_BOT_TOKEN]}"
 WB_TOKEN="${ary[WB_TOKEN]}"
 LK_NAME="${ary[LK_NAME]}"
 LK_PATH="${ary[LK_PATH]}"
+TG_PROXY="${ary[TG_PROXY]}"
 
 cd $LK_PATH
 
@@ -61,7 +62,7 @@ echo $(jq -r '.data.questions' $CURRENT_FILEPATH/$CURRENT_FILENAME | jq -r 'del(
                   for k in `seq 1 $CHAT_NUM`; do
                         current_chat_id=chat_id_$k
                         if  [ "${!current_chat_id}" != "" ]; then
-	                	curl -s -X POST 'https://api.telegram.org/bot'$TG_BOT_TOKEN'/sendMessage' -d chat_id=${!current_chat_id} \
+	                	curl -s $TG_PROXY -X POST 'https://api.telegram.org/bot'$TG_BOT_TOKEN'/sendMessage' -d chat_id=${!current_chat_id} \
              	                        -d text="Новый вопрос! %0A$LK_NAME %0AАртикул: $JSON_SKU %0AДата: $JSON_DATE %0AТекст: $JSON_TEXT" &
                                 echo "--------------------"
                         fi
