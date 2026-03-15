@@ -28,7 +28,7 @@ CURRENT_FILEPATH=qsts
 CURRENT_FILENAME=$DATETIME.json
 mkdir -p $CURRENT_FILEPATH
 
-curl -s --location --request GET 'https://feedbacks-api.wb.ru/api/v1/questions?isAnswered=false&take=5000&skip=0' --header 'Authorization: '$WB_TOKEN --header 'Content-Type: application/json' > $CURRENT_FILEPATH/$CURRENT_FILENAME
+curl -s --location --request GET 'https://feedbacks-api.wildberries.ru/api/v1/questions?isAnswered=false&take=5000&skip=0' --header 'Authorization: '$WB_TOKEN --header 'Content-Type: application/json' > $CURRENT_FILEPATH/$CURRENT_FILENAME
 echo $(jq -r '.data.questions' $CURRENT_FILEPATH/$CURRENT_FILENAME | jq -r 'del(.[].answer,.[].state,.[].wasViewed,.[].isWarned,.[].productDetails.size,.[].productDetails.nmId,.[].productDetails.imtId,.[].productDetails.productName,.[].productDetails.supplierName,.[].productDetails.brandName)' | jq -r '. |= sort_by(.createdDate)') > $CURRENT_FILEPATH/$CURRENT_FILENAME
 
     NOT_ANSWERED_JSON=$(<$CURRENT_FILEPATH/$CURRENT_FILENAME)
