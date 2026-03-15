@@ -18,20 +18,27 @@ TG_BOT_TOKEN="${ary[TG_BOT_TOKEN]}"
 WB_TOKEN="${ary[WB_TOKEN]}"
 LK_NAME="${ary[LK_NAME]}"
 LK_PATH="${ary[LK_PATH]}"
+TG_PROXY="${ary[TG_PROXY]}"
 
 cd $LK_PATH
 
-LENGTH=$(jq length sku-new.json)
+LENGTH=$(jq length sku.json)
 DATETIME=$(date +'%Y-%m-%d-%H-%M-%S')
+ 
+if [ ! -f jobs/send_messages.sh ]; then
+    mkdir jobs
+    echo "#!/bin/bash" > jobs/send_messages.sh
+    echo "set -e" >> jobs/send_messages.sh
+fi
 
 for i in `seq 0 $(( $LENGTH - 1 ))`; do
-    CURRENT_GROUP=$(jq -r '.['$i'].group' sku-new.json)
+    CURRENT_GROUP=$(jq -r '.['$i'].group' sku.json)
     echo "===================="
     echo "CURRENT_GROUP=$CURRENT_GROUP"
     echo "===================="
-    CURRENT_GROUP_LENGTH=$(jq -r '[.[]|select(.group=="'$CURRENT_GROUP'")][].sku[].num' sku-new.json | wc -l)
+    CURRENT_GROUP_LENGTH=$(jq -r '[.[]|select(.group=="'$CURRENT_GROUP'")][].sku[].num' sku.json | wc -l)
     for n in `seq 0 $(( $CURRENT_GROUP_LENGTH - 1 ))`; do
-        CURRENT_SKU=$(jq -r '[.[]|select(.group=="'$CURRENT_GROUP'")][].sku['$n'].num' sku-new.json)
+        CURRENT_SKU=$(jq -r '[.[]|select(.group=="'$CURRENT_GROUP'")][].sku['$n'].num' sku.json)
         echo "n=$n; CURRENT_SKU=$CURRENT_SKU"
 
         WB_TOKEN_CHANGE=$(curl -s --location --request GET 'https://feedbacks-api.wildberries.ru/api/v1/feedbacks?isAnswered=false&take=5000&skip=0&nmId='$CURRENT_SKU --header 'Authorization: '$WB_TOKEN --header 'Content-Type: application/json' | jq -r '.status')
@@ -45,9 +52,9 @@ for i in `seq 0 $(( $LENGTH - 1 ))`; do
         mkdir -p $CURRENT_FILEPATH
 
         curl -s --location --request GET 'https://feedbacks-api.wildberries.ru/api/v1/feedbacks?isAnswered=true&take=5000&skip=0&nmId='$CURRENT_SKU  --header 'Authorization: '$WB_TOKEN --header 'Content-Type: application/json' > $CURRENT_FILEPATH/ANSWERED_$CURRENT_FILENAME
-        echo $(jq -r '.data.feedbacks' $CURRENT_FILEPATH/ANSWERED_$CURRENT_FILENAME     | jq -r 'del(.[].answer,.[].state,.[].video,.[].photoLinks,.[].matchingSize,.[].isAbleSupplierFeedbackValuation,.[].supplierFeedbackValuation,.[].isAbleSupplierProductValuation,.[].supplierProductValuation,.[].isAbleReturnProductOrders,.[].returnProductOrdersDate,.[].subjectId,.[].subjectName,.[].wasViewed,.[].productDetails.size,.[].productDetails.imtId,.[].productDetails.productName,.[].productDetails.supplierName,.[].productDetails.brandName,.[].color,.[].subjectName,.[].parentFeedbackId,.[].childFeedbackId)' | jq -r '. |= sort_by(.createdDate)') > $CURRENT_FILEPATH/ANSWERED_$CURRENT_FILENAME
+        echo $(jq -r '.data.feedbacks' $CURRENT_FILEPATH/ANSWERED_$CURRENT_FILENAME     | jq -r 'del(.[].answer,.[].state,.[].matchingSize,.[].isAbleSupplierFeedbackValuation,.[].supplierFeedbackValuation,.[].isAbleSupplierProductValuation,.[].supplierProductValuation,.[].isAbleReturnProductOrders,.[].returnProductOrdersDate,.[].subjectId,.[].subjectName,.[].wasViewed,.[].productDetails.size,.[].productDetails.imtId,.[].productDetails.productName,.[].productDetails.supplierName,.[].productDetails.brandName,.[].color,.[].subjectName,.[].childFeedbackId)' | jq -r '. |= sort_by(.createdDate)') > $CURRENT_FILEPATH/ANSWERED_$CURRENT_FILENAME
         curl -s --location --request GET 'https://feedbacks-api.wildberries.ru/api/v1/feedbacks?isAnswered=false&take=5000&skip=0&nmId='$CURRENT_SKU --header 'Authorization: '$WB_TOKEN --header 'Content-Type: application/json' > $CURRENT_FILEPATH/NOT_ANSWERED_$CURRENT_FILENAME
-        echo $(jq -r '.data.feedbacks' $CURRENT_FILEPATH/NOT_ANSWERED_$CURRENT_FILENAME | jq -r 'del(.[].answer,.[].state,.[].video,.[].photoLinks,.[].matchingSize,.[].isAbleSupplierFeedbackValuation,.[].supplierFeedbackValuation,.[].isAbleSupplierProductValuation,.[].supplierProductValuation,.[].isAbleReturnProductOrders,.[].returnProductOrdersDate,.[].subjectId,.[].subjectName,.[].wasViewed,.[].productDetails.size,.[].productDetails.imtId,.[].productDetails.productName,.[].productDetails.supplierName,.[].productDetails.brandName,.[].color,.[].subjectName,.[].parentFeedbackId,.[].childFeedbackId)' | jq -r '. |= sort_by(.createdDate)') > $CURRENT_FILEPATH/NOT_ANSWERED_$CURRENT_FILENAME
+        echo $(jq -r '.data.feedbacks' $CURRENT_FILEPATH/NOT_ANSWERED_$CURRENT_FILENAME | jq -r 'del(.[].answer,.[].state,.[].matchingSize,.[].isAbleSupplierFeedbackValuation,.[].supplierFeedbackValuation,.[].isAbleSupplierProductValuation,.[].supplierProductValuation,.[].isAbleReturnProductOrders,.[].returnProductOrdersDate,.[].subjectId,.[].subjectName,.[].wasViewed,.[].productDetails.size,.[].productDetails.imtId,.[].productDetails.productName,.[].productDetails.supplierName,.[].productDetails.brandName,.[].color,.[].subjectName,.[].childFeedbackId)' | jq -r '. |= sort_by(.createdDate)') > $CURRENT_FILEPATH/NOT_ANSWERED_$CURRENT_FILENAME
 
         ANSWERED_JSON=$(<$CURRENT_FILEPATH/ANSWERED_$CURRENT_FILENAME)
         if [ "$ANSWERED_JSON" == "[]" ] || [ "$ANSWERED_JSON" == null ] || [ "$ANSWERED_JSON" == "" ]; then
@@ -111,13 +118,15 @@ for i in `seq 0 $(( $LENGTH - 1 ))`; do
                     JSON_SUPPLIER_ARTICLE=$(jq -r '.['$j'].productDetails.supplierArticle' reports/$DATETIME-$CURRENT_SKU)
                     JSON_SUPPLIER_ARTICLE=$(sed 's|\&||g' <<<$JSON_SUPPLIER_ARTICLE)
                     JSON_USERNAME=$(jq -r '.['$j'].userName' reports/$DATETIME-$CURRENT_SKU)
-                    JSON_TEXT=$(jq -r '.['$j'].text' reports/$DATETIME-$CURRENT_SKU)
+                    JSON_TEXT=$(jq -r '.['$j'].text' reports/$DATETIME-$CURRENT_SKU | tr '*' '#' || true)
                     JSON_PROS=$(jq -r '.['$j'].pros' reports/$DATETIME-$CURRENT_SKU)
                     JSON_CONS=$(jq -r '.['$j'].cons' reports/$DATETIME-$CURRENT_SKU)
-                    JSON_BABLES=$(jq -r '.['$j'].bables' reports/$DATETIME-$CURRENT_SKU | tr '\n' ' ')
+                    JSON_BABLES=$(jq -r '.['$j'].bables' reports/$DATETIME-$CURRENT_SKU | tr '\n' ' ' | tr  -d '"' || true)
                     JSON_ORDER_DATE_GMT=$(jq -r '.['$j'].lastOrderCreatedAt' reports/$DATETIME-$CURRENT_SKU)
                     JSON_ORDER_DATE=$(TZ=Europe/Moscow date -d "$JSON_ORDER_DATE_GMT" +'%Y-%m-%d %H:%M:%S')
                     JSON_PRODUCT_VALUE=$(jq -r '.['$j'].productValuation' reports/$DATETIME-$CURRENT_SKU)
+                    JSON_PARENT_FEEDBACK_ID=$(jq -r '.['$j'].parentFeedbackId' reports/$DATETIME-$CURRENT_SKU)
+                    JSON_ORDER_STATUS=$(jq -r '.['$j'].orderStatus' reports/$DATETIME-$CURRENT_SKU)
                     JSON_DATE_GMT=$(jq -r '.['$j'].createdDate' reports/$DATETIME-$CURRENT_SKU)
                     JSON_DATE=$(TZ=Europe/Moscow date -d "$JSON_DATE_GMT" +'%Y-%m-%d %H:%M:%S')
                     JSON_STARS=
@@ -125,6 +134,34 @@ for i in `seq 0 $(( $LENGTH - 1 ))`; do
                     do
                             JSON_STARS="$JSON_STARS$STAR"
                     done
+
+                    CURL_MESSAGE_PREFIX="Новый отзыв"
+                    if [ "$JSON_PARENT_FEEDBACK_ID" != null ]; then
+                        CURL_MESSAGE_PREFIX="Дополненный отзыв"
+                    fi
+                    CURL_ORDER_STATUS="Выкуп"
+                    if [ "$JSON_ORDER_STATUS" == "returned" ]; then
+                        CURL_ORDER_STATUS="Возврат"
+                    elif [ "$JSON_ORDER_STATUS" == "rejected" ]; then
+                        CURL_ORDER_STATUS="Отказ на ПВЗ"
+                    fi
+                    CURL_MESSAGE_BODY="$CURL_MESSAGE_PREFIX: $JSON_STARS %0A$LK_NAME %0AАртикул: $JSON_SUPPLIER_ARTICLE %0AДата: $JSON_DATE %0AПользователь: $JSON_USERNAME %0AПлюсы: $JSON_PROS %0AМинусы: $JSON_CONS %0AТекст: $JSON_TEXT %0AПримечание: $JSON_BABLES %0AСтатус заказа: $CURL_ORDER_STATUS %0AТовар был заказан: $JSON_ORDER_DATE"
+
+                    CURL_METHOD="sendMessage"
+                    CURL_DATA="text='$CURL_MESSAGE_BODY'"
+                    JSON_MEDIA_COUNT=$(jq -r '.['$j'].photoLinks | length' reports/$DATETIME-$CURRENT_SKU)
+                    if [ $JSON_MEDIA_COUNT -gt 0 ]; then
+                        JSON_IMG_URL=$(jq -r '.['$j'].photoLinks[0].fullSize' reports/$DATETIME-$CURRENT_SKU)
+                        JSON_MEDIA="[{\"type\": \"photo\",\"media\": \"$JSON_IMG_URL\",\"caption\": \"$CURL_MESSAGE_BODY\"}"
+                        for l in `seq 1 $(( $JSON_MEDIA_COUNT - 1 ))`
+                        do
+                            JSON_IMG_URL=$(jq -r '.['$j'].photoLinks['$l'].fullSize' reports/$DATETIME-$CURRENT_SKU)
+                            JSON_MEDIA=$JSON_MEDIA",{\"type\": \"photo\",\"media\": \"$JSON_IMG_URL\"}"
+                        done
+                        JSON_MEDIA=$JSON_MEDIA"]"
+                        CURL_METHOD="sendMediaGroup"
+                        CURL_DATA="media='$JSON_MEDIA'"
+                    fi
 
                     # check if feedback is more than one month old
                     JSON_DATE_TIMESTAMP=$(date -ud "$JSON_DATE_GMT" +"%s")
@@ -134,11 +171,18 @@ for i in `seq 0 $(( $LENGTH - 1 ))`; do
                             for k in `seq 1 $CHAT_NUM`; do
                                     current_chat_id=chat_id_$k
                                     if  [ "${!current_chat_id}" != "" ]; then
-                                            curl -s -X POST 'https://api.telegram.org/bot'$TG_BOT_TOKEN'/sendMessage' -d chat_id=${!current_chat_id} \
-                                                    -d text="Новая оценка: $JSON_STARS %0A$LK_NAME %0AАртикул: $JSON_SUPPLIER_ARTICLE %0AДата: $JSON_DATE %0AПользователь: $JSON_USERNAME %0AПлюсы: $JSON_PROS %0AМинусы: $JSON_CONS %0AТекст: $JSON_TEXT%0AНедостатки: $JSON_BABLES%0AТовар был заказан: $JSON_ORDER_DATE" &
+                                            echo "curl -s $TG_PROXY -X POST 'https://api.telegram.org/bot$TG_BOT_TOKEN/$CURL_METHOD' -d chat_id=${!current_chat_id} -d $CURL_DATA" >> jobs/send_messages.sh
+                                            bash jobs/send_messages.sh
+                                            CURL_OUTPUT=$(echo $?)
+                                            if [ $CURL_OUTPUT -eq 0 ]; then
+                                                    rm jobs/send_messages.sh
+                                            fi
                                             echo "--------------------"
                                     fi
                             done
+                    else
+                        echo "FEEDBACK IS OLDER THAN 1 MONTH"
+                        echo "--------------------"
                     fi
             done
             jq -s '.[0] + .[1]' $CURRENT_FILEPATH/$PREVIOUS_FILENAME reports/$DATETIME-$CURRENT_SKU | jq -r '. |= sort_by(.createdDate)' > $CURRENT_FILEPATH/tmp.json
