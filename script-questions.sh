@@ -47,37 +47,42 @@ if [ "$NOT_ANSWERED_JSON" != "[]" ] && [ "$NOT_ANSWERED_JSON" != null ] && [ "$N
         echo FILES_ARE_DIFFERENT=$FILES_ARE_DIFFERENT
     fi
 
-
     if [ $FILES_ARE_DIFFERENT -gt 0 ] && [ $FILE_IS_FIRST -gt 1 ]; then
-    CHANGES_COUNT=$(jq length $CURRENT_FILEPATH/$CURRENT_FILENAME)
+        CHANGES_COUNT=$(jq length $CURRENT_FILEPATH/$CURRENT_FILENAME)
         echo CHANGES_COUNT=$CHANGES_COUNT
         for j in `seq 0 $(( $CHANGES_COUNT - 1 ))`; do
-                echo j=$j
-                JSON_TEXT=$(jq -r '.['$j'].text' $CURRENT_FILEPATH/$CURRENT_FILENAME)
-                JSON_DATE_GMT=$(jq -r '.['$j'].createdDate' $CURRENT_FILEPATH/$CURRENT_FILENAME)
-                JSON_DATE=$(TZ=Europe/Moscow date -d "$JSON_DATE_GMT" +'%Y-%m-%d %H:%M:%S')
-                JSON_SKU=$(jq -r '.['$j'].productDetails.supplierArticle' $CURRENT_FILEPATH/$CURRENT_FILENAME)
+            echo j=$j
+            JSON_ID=$(jq -r '.['$j'].id' $CURRENT_FILEPATH/$CURRENT_FILENAME)
+            JSON_TEXT=$(jq -r '.['$j'].text' $CURRENT_FILEPATH/$CURRENT_FILENAME)
+            JSON_DATE_GMT=$(jq -r '.['$j'].createdDate' $CURRENT_FILEPATH/$CURRENT_FILENAME)
+            JSON_DATE=$(TZ=Europe/Moscow date -d "$JSON_DATE_GMT" +'%Y-%m-%d %H:%M:%S')
+            JSON_SKU=$(jq -r '.['$j'].productDetails.supplierArticle' $CURRENT_FILEPATH/$CURRENT_FILENAME)
+            JSON_SKU=$(sed 's|\&||g' <<<$JSON_SKU)
+            # check if current question id exists in previous qsts reference file
+            QUESTION_ID_EXIST=$(grep -Rlw $CURRENT_FILEPATH/$PREVIOUS_FILENAME -e "$JSON_ID" | wc -l)
+            if [ $QUESTION_ID_EXIST -eq 0 ]; then
                 # send messages from bot
                 for k in `seq 1 $CHAT_NUM`; do
                     current_chat_id=chat_id_$k
                     if  [ "${!current_chat_id}" != "" ]; then
-                            curl -s $TG_PROXY -X POST 'https://api.telegram.org/bot'$TG_BOT_TOKEN'/sendMessage' -d chat_id=${!current_chat_id} \
-                                    -d text="Новый вопрос! %0A$LK_NAME %0AАртикул: $JSON_SKU %0AДата: $JSON_DATE %0AТекст: $JSON_TEXT" &
-                            echo "--------------------"
+                        curl -s $TG_PROXY -X POST 'https://api.telegram.org/bot'$TG_BOT_TOKEN'/sendMessage' -d chat_id=${!current_chat_id} \
+                                -d text="Новый вопрос! %0A$LK_NAME %0AАртикул: $JSON_SKU %0AДата: $JSON_DATE %0AТекст: $JSON_TEXT" &
+                        echo "--------------------"
                     fi
                 done
+            else
+                echo "This question was already sent earlier"
+                echo "--------------------"
+            fi
         done
 # FIRST RUN EXCEPTION
     elif [ $FILES_ARE_DIFFERENT -eq 0 ] && [ $FILE_IS_FIRST -eq 1 ]; then
-            echo "FIRST RUN! Creating base for future comparison"
+        echo "FIRST RUN! Creating base for future comparison"
     elif [ $FILES_ARE_DIFFERENT -eq 0 ] && [ $FILE_IS_FIRST -gt 1 ]; then
         echo "NO CHANGES FOUND!"
         rm $CURRENT_FILEPATH/$CURRENT_FILENAME
     fi
-    echo "--------------------"
-
 else
     echo "No new questions"
-    echo "--------------------"
-rm $CURRENT_FILEPATH/$CURRENT_FILENAME
+    rm $CURRENT_FILEPATH/$CURRENT_FILENAME
 fi
