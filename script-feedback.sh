@@ -125,6 +125,8 @@ for i in `seq 0 $(( $LENGTH - 1 ))`; do
                     JSON_ORDER_DATE_GMT=$(jq -r '.['$j'].lastOrderCreatedAt' reports/$DATETIME-$CURRENT_SKU)
                     JSON_ORDER_DATE=$(TZ=Europe/Moscow date -d "$JSON_ORDER_DATE_GMT" +'%Y-%m-%d %H:%M:%S')
                     JSON_PRODUCT_VALUE=$(jq -r '.['$j'].productValuation' reports/$DATETIME-$CURRENT_SKU)
+                    JSON_PARENT_FEEDBACK_ID=$(jq -r '.['$j'].parentFeedbackId' reports/$DATETIME-$CURRENT_SKU)
+                    JSON_ORDER_STATUS=$(jq -r '.['$j'].orderStatus' reports/$DATETIME-$CURRENT_SKU)
                     JSON_DATE_GMT=$(jq -r '.['$j'].createdDate' reports/$DATETIME-$CURRENT_SKU)
                     JSON_DATE=$(TZ=Europe/Moscow date -d "$JSON_DATE_GMT" +'%Y-%m-%d %H:%M:%S')
                     JSON_STARS=
@@ -132,7 +134,18 @@ for i in `seq 0 $(( $LENGTH - 1 ))`; do
                     do
                             JSON_STARS="$JSON_STARS$STAR"
                     done
-                    CURL_MESSAGE_BODY="Новая оценка: $JSON_STARS %0A$LK_NAME %0AАртикул: $JSON_SUPPLIER_ARTICLE %0AДата: $JSON_DATE %0AПользователь: $JSON_USERNAME %0AПлюсы: $JSON_PROS %0AМинусы: $JSON_CONS %0AТекст: $JSON_TEXT%0AПримечание: $JSON_BABLES%0AТовар был заказан: $JSON_ORDER_DATE"
+
+                    CURL_MESSAGE_PREFIX="Новый отзыв"
+                    if [ "$JSON_PARENT_FEEDBACK_ID" != null ]; then
+                        CURL_MESSAGE_PREFIX="Дополненный отзыв"
+                    fi
+                    CURL_ORDER_STATUS="Выкуп"
+                    if [ "$JSON_ORDER_STATUS" == "returned" ]; then
+                        CURL_ORDER_STATUS="Возврат"
+                    elif [ "$JSON_ORDER_STATUS" == "rejected" ]; then
+                        CURL_ORDER_STATUS="Отказ на ПВЗ"
+                    fi
+                    CURL_MESSAGE_BODY="$CURL_MESSAGE_PREFIX: $JSON_STARS %0A$LK_NAME %0AАртикул: $JSON_SUPPLIER_ARTICLE %0AДата: $JSON_DATE %0AПользователь: $JSON_USERNAME %0AПлюсы: $JSON_PROS %0AМинусы: $JSON_CONS %0AТекст: $JSON_TEXT %0AПримечание: $JSON_BABLES %0AСтатус заказа: $CURL_ORDER_STATUS %0AТовар был заказан: $JSON_ORDER_DATE"
 
                     CURL_METHOD="sendMessage"
                     CURL_DATA="text='$CURL_MESSAGE_BODY'"
