@@ -167,16 +167,11 @@ for i in `seq 0 $(( $LENGTH - 1 ))`; do
                     JSON_DATE_TIMESTAMP=$(date -ud "$JSON_DATE_GMT" +"%s")
                     ONE_MONTH_AGO_TIMESTAMP=$(date -ud "1 month ago" +"%s")
                     if [ $JSON_DATE_TIMESTAMP -gt $ONE_MONTH_AGO_TIMESTAMP ]; then
-                            # send messages from bot
+                            # collect curl commands in jobs/send_messages.sh
                             for k in `seq 1 $CHAT_NUM`; do
                                     current_chat_id=chat_id_$k
                                     if  [ "${!current_chat_id}" != "" ]; then
-                                            echo "curl -s $TG_PROXY -X POST 'https://api.telegram.org/bot$TG_BOT_TOKEN/$CURL_METHOD' -d chat_id=${!current_chat_id} -d $CURL_DATA" >> jobs/send_messages.sh
-                                            bash jobs/send_messages.sh
-                                            CURL_OUTPUT=$(echo $?)
-                                            if [ $CURL_OUTPUT -eq 0 ]; then
-                                                    rm jobs/send_messages.sh
-                                            fi
+                                            echo "sleep 1 && curl -s $TG_PROXY -X POST 'https://api.telegram.org/bot$TG_BOT_TOKEN/$CURL_METHOD' -d chat_id=${!current_chat_id} -d $CURL_DATA" >> jobs/send_messages.sh
                                             echo "--------------------"
                                     fi
                             done
@@ -199,3 +194,10 @@ for i in `seq 0 $(( $LENGTH - 1 ))`; do
         echo "--------------------"
     done
 done
+
+# SEND MESSAGES FROM BOT
+bash jobs/send_messages.sh
+CURL_OUTPUT=$(echo $?)
+if [ $CURL_OUTPUT -eq 0 ]; then
+        rm jobs/send_messages.sh
+fi
