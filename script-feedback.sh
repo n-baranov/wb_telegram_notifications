@@ -26,9 +26,18 @@ LENGTH=$(jq length sku.json)
 DATETIME=$(date +'%Y-%m-%d-%H-%M-%S')
  
 if [ ! -f jobs/send_messages.sh ]; then
-    mkdir jobs
+    mkdir -p jobs
     echo "#!/bin/bash" > jobs/send_messages.sh
     echo "set -e" >> jobs/send_messages.sh
+fi
+
+# CHECK WB TOKEN VALIDITY
+FIRST_GROUP=$(jq -r '.[0].group' sku.json)
+FIRST_SKU=$(jq -r '[.[]|select(.group=="'$FIRST_GROUP'")][].sku[0].num' sku.json)
+REQUEST_STATUS=$(curl -s --location --request GET 'https://feedbacks-api.wildberries.ru/api/v1/feedbacks?isAnswered=false&take=5000&skip=0&nmId='$FIRST_SKU --header 'Authorization: '$WB_TOKEN --header 'Content-Type: application/json' | jq -r '.status')
+if  [ $REQUEST_STATUS == '401' ]; then
+    curl -s $TG_PROXY -X POST 'https://api.telegram.org/bot'$TG_BOT_TOKEN'/sendMessage' -d chat_id=$chat_id_1 -d text="Токен WB изменился! Требуется обновить токен в скрипте на сервере%0A$LK_NAME"
+    break
 fi
 
 for i in `seq 0 $(( $LENGTH - 1 ))`; do
@@ -39,14 +48,8 @@ for i in `seq 0 $(( $LENGTH - 1 ))`; do
     CURRENT_GROUP_LENGTH=$(jq -r '[.[]|select(.group=="'$CURRENT_GROUP'")][].sku[].num' sku.json | wc -l)
     for n in `seq 0 $(( $CURRENT_GROUP_LENGTH - 1 ))`; do
         CURRENT_SKU=$(jq -r '[.[]|select(.group=="'$CURRENT_GROUP'")][].sku['$n'].num' sku.json)
+        date +'%Y-%m-%d-%H-%M-%S'
         echo "n=$n; CURRENT_SKU=$CURRENT_SKU"
-
-        WB_TOKEN_CHANGE=$(curl -s --location --request GET 'https://feedbacks-api.wildberries.ru/api/v1/feedbacks?isAnswered=false&take=5000&skip=0&nmId='$CURRENT_SKU --header 'Authorization: '$WB_TOKEN --header 'Content-Type: application/json' | jq -r '.status')
-        if  [ $WB_TOKEN_CHANGE == '401' ]; then
-            curl -s -X POST 'https://api.telegram.org/bot'$TG_BOT_TOKEN'/sendMessage' -d chat_id=$chat_id_1 -d text="Токен WB изменился! Требуется обновить токен в скрипте на сервере%0A$LK_NAME"
-        break
-        fi
-
         CURRENT_FILEPATH=src/$CURRENT_SKU
         CURRENT_FILENAME=$DATETIME.json
         mkdir -p $CURRENT_FILEPATH
@@ -199,5 +202,5 @@ done
 bash jobs/send_messages.sh
 CURL_OUTPUT=$(echo $?)
 if [ $CURL_OUTPUT -eq 0 ]; then
-        rm jobs/send_messages.sh
+    rm jobs/send_messages.sh
 fi
