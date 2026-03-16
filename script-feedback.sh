@@ -94,7 +94,6 @@ for i in `seq 0 $(( $LENGTH - 1 ))`; do
         else
             echo "This is not the first run"
             PREVIOUS_FILENAME=0-feedback-pool.json
-            echo PREVIOUS_FILENAME=$PREVIOUS_FILENAME
             FILES_ARE_DIFFERENT=$(jd -set $CURRENT_FILEPATH/$PREVIOUS_FILENAME $CURRENT_FILEPATH/$CURRENT_FILENAME | wc -l)
             echo FILES_ARE_DIFFERENT=$FILES_ARE_DIFFERENT
         fi
@@ -174,7 +173,7 @@ for i in `seq 0 $(( $LENGTH - 1 ))`; do
                             for k in `seq 1 $CHAT_NUM`; do
                                     current_chat_id=chat_id_$k
                                     if  [ "${!current_chat_id}" != "" ]; then
-                                            echo "sleep 1 && curl -s $TG_PROXY -X POST 'https://api.telegram.org/bot$TG_BOT_TOKEN/$CURL_METHOD' -d chat_id=${!current_chat_id} -d $CURL_DATA" >> jobs/send_messages.sh
+                                            echo "curl -s $TG_PROXY -X POST 'https://api.telegram.org/bot$TG_BOT_TOKEN/$CURL_METHOD' -d chat_id=${!current_chat_id} -d $CURL_DATA" >> jobs/send_messages.sh
                                             echo "--------------------"
                                     fi
                             done
