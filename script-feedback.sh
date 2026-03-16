@@ -199,7 +199,7 @@ for i in `seq 0 $(( $LENGTH - 1 ))`; do
 done
 
 # SEND MESSAGES FROM BOT
-bash jobs/send_messages.sh
+timeout 60 bash jobs/send_messages.sh
 CURL_OUTPUT=$(echo $?)
 if [ $CURL_OUTPUT -eq 0 ]; then
     rm jobs/send_messages.sh
